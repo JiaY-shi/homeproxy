@@ -1,0 +1,68 @@
+defaults: &defaults
+  type: anytls
+  server: example.com
+  port: 443
+  password: "001234"
+  skip-cert-verify: false
+
+dns:
+  nameserver-policy:
+    '+.example.com': ['https://dns.example.org:8443/dns-query/test#skip-cert-verify=true', 'tls://1.1.1.1']
+    'sub.example.com': 'tls://1.1.1.1'
+
+proxies:
+  - name: "香港 #1: AnyTLS"
+    port: 8443
+    <<: *defaults
+    sni: example.org
+    client-fingerprint: chrome
+    tfo: true
+    idle-session-check-interval: 30
+    min-idle-session: 0
+  - {name: HY2, type: hysteria2, server: "[2001:db8::1]", password: "p:a#ss", ports: "20000-21000,443", hop-interval: 30, skip-cert-verify: true, up: "1 Gbps", down: "10 MBps"}
+  - name: VLESS
+    type: vless
+    server: example.com
+    port: 443
+    uuid: 00000000-0000-4000-8000-000000000001
+    tls: true
+    servername: example.org
+    reality-opts:
+      public-key: test-public-key
+      short-id: "0123456789abcdef"
+    network: ws
+    ws-opts:
+      path: /websocket?ed=2048
+      headers: {Host: example.org}
+    alpn: [h2, http/1.1]
+  - name: VMess
+    type: vmess
+    server: example.com
+    port: 80
+    uuid: 00000000-0000-4000-8000-000000000002
+    alterId: 0
+    cipher: auto
+    network: h2
+    h2-opts: {host: [example.org], path: /h2}
+  - name: Trojan
+    type: trojan
+    server: example.com
+    port: 443
+    password: "' ; $(touch /tmp/homeproxy-clash-injection) #"
+    network: grpc
+    grpc-opts: {grpc-service-name: tunnel}
+  - name: SS
+    type: ss
+    server: example.com
+    port: 8388
+    cipher: aes-128-gcm
+    password: "密码:# test"
+    plugin: obfs
+    plugin-opts: {mode: tls, host: example.org}
+    udp-over-tcp: true
+  - {name: HTTP, type: http, server: example.com, port: 443, tls: true, username: user, password: 12345}
+  - {name: SOCKS, type: socks5, server: example.com, port: 1080, username: user, password: "pass"}
+  - {name: TUIC, type: tuic, server: example.com, port: 443, uuid: 00000000-0000-4000-8000-000000000003, password: pass, congestion-controller: bbr, udp-relay-mode: native, reduce-rtt: true}
+  - {name: HY1, type: hysteria, server: example.com, port: 443, auth-str: pass, protocol: udp, up: 50, down: 100}
+  - {name: unsupported, type: mieru, server: example.com, port: 443}
+  - "invalid node"

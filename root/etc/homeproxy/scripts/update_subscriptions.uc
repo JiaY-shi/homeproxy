@@ -13,6 +13,7 @@ import { connect } from 'ubus';
 import { cursor } from 'uci';
 
 import { urldecode, urlencode } from 'luci.http';
+import { parseClash, parseSubscription } from 'subscription';
 
 import {
 	wGET, decodeBase64Str, getTime, isEmpty, parseURL,
@@ -87,7 +88,13 @@ function parse_uri(uri) {
 	let config, url, params;
 
 	if (type(uri) === 'object') {
-		if (uri.nodetype === 'sip008') {
+		if (uri.nodetype === 'clash') {
+			config = parseClash(uri, sing_features);
+			if (!config) {
+				log(sprintf('Skipping unsupported Clash %s node or options: %s.', uri.type || 'unknown', uri.name || 'NULL'));
+				return null;
+			}
+		} else if (uri.nodetype === 'sip008') {
 			/* https://shadowsocks.org/guide/sip008.html */
 			config = {
 				label: uri.remarks,
@@ -495,14 +502,10 @@ function main() {
 
 		let nodes;
 		try {
-			nodes = json(res).servers || json(res);
-
-			/* Shadowsocks SIP008 format */
-			if (nodes[0].server && nodes[0].method)
-				map(nodes, (_, i) => nodes[i].nodetype = 'sip008');
+			nodes = parseSubscription(res);
 		} catch(e) {
-			nodes = decodeBase64Str(res);
-			nodes = nodes ? split(trim(replace(nodes, / /g, '_')), '\n') : [];
+			log(sprintf('Failed to parse subscription from %s.', url));
+			continue;
 		}
 
 		let count = 0;

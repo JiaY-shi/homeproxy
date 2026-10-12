@@ -11,7 +11,8 @@ LUCI_DEPENDS:= \
 	+firewall4 \
 	+kmod-nft-tproxy \
 	+ucode-mod-digest \
-	+ucode-mod-math
+	+ucode-mod-math \
+	+yq
 
 PKG_NAME:=luci-app-homeproxy
 

@@ -7,10 +7,12 @@
 
 'use strict';
 
+import { md5 } from 'digest';
 import { readfile, writefile } from 'fs';
 import { isnan } from 'math';
 import { connect } from 'ubus';
 import { cursor } from 'uci';
+import { parseClashDNS } from 'subscription';
 
 import {
 	isEmpty, parseURL, strToBool, strToInt, strToTime,
@@ -18,6 +20,7 @@ import {
 } from 'homeproxy';
 
 const ubus = connect();
+const subscription_dns_servers = {};
 
 /* const features = ubus.call('luci.homeproxy', 'singbox_get_features') || {}; */
 
@@ -213,6 +216,21 @@ function generate_endpoint(node) {
 	return endpoint;
 }
 
+function node_domain_resolver(node) {
+	if (!node.clash_dns_server)
+		return null;
+	const tag = 'subscription-dns-' + md5(node.clash_dns_server);
+	if (!subscription_dns_servers[tag]) {
+		const server = parseClashDNS(node.clash_dns_server);
+		if (!server)
+			die('Invalid subscription DNS resolver\n');
+		server.tag = tag;
+		server.detour = 'direct-out';
+		subscription_dns_servers[tag] = server;
+	}
+	return tag;
+}
+
 function generate_outbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -224,6 +242,7 @@ function generate_outbound(node) {
 
 		server: node.address,
 		server_port: strToInt(node.port),
+		domain_resolver: node_domain_resolver(node),
 		/* Hysteria(2) */
 		server_ports: node.hysteria_hopping_port,
 
@@ -471,6 +490,8 @@ function generate_latency_test() {
 		}
 		push(test_tags, tag);
 	}
+	for (let tag, server in subscription_dns_servers)
+		push(test_config.dns.servers, server);
 
 	push(test_config.outbounds, {
 		type: 'selector',
@@ -872,6 +893,8 @@ if (!isEmpty(main_node)) {
 
 if (isEmpty(config.endpoints))
 	config.endpoints = null;
+for (let tag, server in subscription_dns_servers)
+	push(config.dns.servers, server);
 /* Outbound end */
 
 /* Routing rules start */

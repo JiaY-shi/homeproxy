@@ -3,3 +3,24 @@ TODO:
 - Refactor nft rules
 - Move ACL settings to a dedicated page
 - Any other improvements
+
+Subscriptions:
+- Clash/Mihomo YAML and JSON subscriptions import nodes from the `proxies` array.
+  YAML parsing requires Mike Farah's yq 4.47.1 or newer (installed as a dependency).
+  Full Clash configurations and proxy-provider files are both supported, including
+  block/flow syntax, comments, quoted strings, anchors and merge keys.
+- Supported Clash node types: ss, socks5, http, vmess, vless, trojan, hysteria,
+  hysteria2, tuic and anytls, subject to the installed sing-box build features.
+  Unsupported protocols/transports are logged and skipped. Mieru is not supported by
+  sing-box. Matching DNS nameserver policies are retained for node resolution
+  (exact domains, +. suffixes and *. subdomains; the first supported resolver is
+  used). UDP, TCP, DoT and DoH resolvers are supported, including custom DoH paths.
+  DNS URLs containing query parameters are skipped.
+  Clash routing rules, proxy groups and general DNS settings are not imported.
+- SIP008 JSON, base64 URI subscriptions and plain URI lists are also accepted.
+- Set the subscription User-Agent when the provider requires a specific client.
+  For Clash Verge subscriptions, use `clash-verge/v2.5.8`.
+
+Parser regression checks (run on the OpenWrt test device with HomeProxy installed):
+  ucode -L /etc/homeproxy/scripts /tmp/subscriptions.uc /tmp/clash.yaml
+Copy tests/subscriptions.uc and tests/clash.yaml to /tmp/ before running.
