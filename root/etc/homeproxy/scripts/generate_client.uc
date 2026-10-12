@@ -700,8 +700,6 @@ push(config.inbounds, {
 	listen: '::',
 	listen_port: int(mixed_port),
 	udp_timeout: strToTime(udp_timeout),
-	sniff: true,
-	sniff_override_destination: strToBool(sniff_override),
 	set_system_proxy: false
 });
 
@@ -711,9 +709,7 @@ if (match(proxy_mode, /redirect/))
 		tag: 'redirect-in',
 
 		listen: '::',
-		listen_port: int(redirect_port),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		listen_port: int(redirect_port)
 	});
 if (match(proxy_mode, /tproxy/))
 	push(config.inbounds, {
@@ -723,9 +719,7 @@ if (match(proxy_mode, /tproxy/))
 		listen: '::',
 		listen_port: int(tproxy_port),
 		network: 'udp',
-		udp_timeout: strToTime(udp_timeout),
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		udp_timeout: strToTime(udp_timeout)
 	});
 if (match(proxy_mode, /tun/))
 	push(config.inbounds, {
@@ -738,9 +732,7 @@ if (match(proxy_mode, /tun/))
 		auto_route: false,
 		endpoint_independent_nat: strToBool(endpoint_independent_nat),
 		udp_timeout: strToTime(udp_timeout),
-		stack: tcpip_stack,
-		sniff: true,
-		sniff_override_destination: strToBool(sniff_override)
+		stack: tcpip_stack
 	});
 /* Inbound end */
 
@@ -889,13 +881,11 @@ config.route = {
 		{
 			inbound: 'dns-in',
 			action: 'hijack-dns'
+		},
+		{
+			inbound: [ 'mixed-in', 'redirect-in', 'tproxy-in', 'tun-in' ],
+			action: 'sniff'
 		}
-		/*
-		 * leave for sing-box 1.13.0
-		 * {
-		 * 	action: 'sniff'
-		 * }
-		 */
 	],
 	rule_set: [],
 	auto_detect_interface: isEmpty(default_interface) ? true : null,
