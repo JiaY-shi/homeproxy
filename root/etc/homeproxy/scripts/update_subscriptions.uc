@@ -573,11 +573,11 @@ function main() {
 			log(sprintf('Removing node: %s.', cfg.label || cfg['name']));
 		} else {
 			map(keys(cfg), (v) => {
-				if (v in node_cache[cfg.grouphash][cfg['.name']])
-					uci.set(uciconfig, cfg['.name'], v, node_cache[cfg.grouphash][cfg['.name']][v]);
-				else
+				if (!(v in node_cache[cfg.grouphash][cfg['.name']]))
 					uci.delete(uciconfig, cfg['.name'], v);
 			});
+			for (let key, value in node_cache[cfg.grouphash][cfg['.name']])
+				uci.set(uciconfig, cfg['.name'], key, value);
 			node_cache[cfg.grouphash][cfg['.name']].isExisting = true;
 		}
 	});
